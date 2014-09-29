@@ -1,5 +1,3 @@
-(replace "yyyymmdd" by the SNARK version date)
-
 Obtaining SNARK:
 
   SNARK can be downloaded from the SNARK web page
@@ -13,6 +11,10 @@ Running SNARK:
   (load "snark-system.lisp")
   (make-snark-system)
   :
+
+OR
+
+(asdf::oos 'asdf::load-op 'snark)
 
 Examples:
 
@@ -34,3 +36,15 @@ A guide to SNARK has been written:
 
 but has not been updated yet to reflect changes in SNARK,
 especially for temporal and spatial reasoning.
+
+Some other documentation issues noticed:
+
+ - The documentation for sorts is out of sync.
+  - declare-disjoint-sorts -> declare-sorts-incompatible
+  - declare-subsorts -> declare-subsort (do them one at a time)
+  - declare-sort-partition -> ??
+  - declare-function-symbol -> declare-function
+  - declare-predicate-symbol -> declare-relation
+  - declare-variable-symbol -> declare-variable
+
+Please submit an issue if you find others
