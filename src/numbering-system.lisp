@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2005.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -24,7 +24,7 @@
   (:export
    #:nonce
    #:initialize-numberings #:make-numbering
-   #:*standard-eql-numbering* #:*standard-equal-numbering*
+   #:*standard-eql-numbering*
    ))
 
 (loads "numbering")

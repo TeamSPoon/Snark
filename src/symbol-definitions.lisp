@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2011.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -124,6 +124,7 @@
   (setf *a-function-with-multiset-ordering-status* (declare-function '$$_internal2 :any :ordering-status :multiset))
 
   (declare-function1 '$$quote :any :macro t :input-code #'input-quoted-constant)
+  #+ignore
   (declare-relation2 '$$eqe 2 :rewrite-code 'equality-rewriter :satisfy-code 'constructor-reflexivity-satisfier :alias '$$eq_equality :constraint-theory 'equality)
   (declare-code-for-lists)
   (declare-code-for-bags)
@@ -140,12 +141,14 @@
   #+ignore
   (declare-function 'the 2 :rewrite-code 'the-term-rewriter)
   nil)
-
+
 (defun initialize-sort-theory2 ()
   (declare-subsort 'top-sort-a t :subsorts-incompatible t :alias :top-sort-a)
   (declare-subsort 'string 'top-sort-a)
   (declare-subsort 'list   'top-sort-a)
   (declare-subsort 'number 'top-sort-a :alias 'complex)
+  (declare-subsort 'time-interval 'top-sort-a)
+  (declare-subsort 'time-point    'top-sort-a)
 
   (declare-subsort 'real 'complex)
   (declare-subsort 'rational 'real)

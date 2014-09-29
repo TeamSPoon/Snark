@@ -544,8 +544,6 @@
     (map-index-leaf-nodes node revpath ->* node revpath)
     (print-index-leaf-node node revpath print-terms)))
 
-(defgeneric map-index-leaf-nodes (cc node revpath))
-
 (defmethod map-index-leaf-nodes (cc (node trie-index-internal-node) revpath)
   (prog->
     (trie-index-internal-node-variable-indexed-child-node node ->nonnil node)
@@ -562,8 +560,6 @@
 
 (defmethod map-index-leaf-nodes (cc (node trie-index-leaf-node) revpath)
   (funcall cc node revpath))
-
-(defgeneric print-index-leaf-node (node revpath print-terms))
 
 (defmethod print-index-leaf-node ((node trie-index-leaf-node) revpath print-terms)
   (with-standard-io-syntax2

@@ -38,7 +38,6 @@
 	   snark-lisp::*running-clocks*
            snark-feature::*feature-tree*
            *standard-eql-numbering*
-           *standard-equal-numbering*
            
            *cons*
            *singleton-bag*
@@ -75,7 +74,6 @@
 	   *assertion-analysis-patterns*
 	   *assertion-analysis-relation-info*
 	   *atom-hash-code*
-	   *break-snark?*
 	   *conditional-answer-connective*
 	   *constant-info-table*
            *constraint-rows*
@@ -113,9 +111,7 @@
            *input-proposition-variables*
            *input-wff-substitution2*
            *input-wff-new-antecedents*
-	   *interactive?
            *less*
-           *lesseq*
 	   *manual-ordering-results*
            *new-symbol-prefix*
            *new-symbol-table*
@@ -141,7 +137,6 @@
            *root-row-context*
 	   *row-count*
            *row-names*
-	   *row2*
            *rowsets*
 	   *rows*
 	   *skolem-function-alist*
@@ -158,7 +153,6 @@
 	   *terpri-indent*
            *trie-index*
 	   *unify-special*
-	   *var-renaming-subst*
 	   *variables*
 	   *world-path-function-alist*
 	   clause-subsumption

@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2011.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -29,7 +29,7 @@
   (hash-code0 (make-atom-hash-code) :read-only t)
   (boolean-valued-p0 nil)		;overloaded to be input name of the proposition
   (constructor0 nil)
-  (magic0 t)				;nil means don't make magic-set goal for this proposition
+  (magic t)				;nil means don't make magic-set goal for this proposition
   (allowed-in-answer0 t)
   (kbo-weight0 1)
   (weight0 1)
@@ -69,7 +69,7 @@
 (define-constant-slot-accessor hash-code0 :read-only t)
 (define-constant-slot-accessor boolean-valued-p0)
 (define-constant-slot-accessor constructor0)
-(define-constant-slot-accessor magic0)
+(define-constant-slot-accessor magic)
 (define-constant-slot-accessor allowed-in-answer0)
 (define-constant-slot-accessor kbo-weight0)
 (define-constant-slot-accessor weight0)
@@ -148,13 +148,6 @@
 (definline constant-constructor (const)
   (if (constant-builtin-p const) t (constant-constructor0 const)))
 
-(definline constant-magic (const)
-  ;; should only be called for propositions, but handle builtin constants anyway
-  (if (constant-builtin-p const) nil (constant-magic0 const)))
-
-(defun (setf constant-magic) (value const)
-  (setf (constant-magic0 const) value))
-
 (definline constant-allowed-in-answer (const)
   (if (constant-builtin-p const) t (constant-allowed-in-answer0 const)))
 
@@ -232,7 +225,7 @@
                                  (author nil author-supplied)
                                  (source nil source-supplied)
                                  (complement nil complement-supplied)
-                                 ((:magic magic0) t magic0-supplied)
+                                 (magic t magic-supplied)
                                  (skolem-p nil skolem-p-supplied)
                                  (created-p nil created-p-supplied)
                                  ((:constructor constructor0) nil constructor0-supplied)
@@ -254,7 +247,7 @@
   (set-slot-if-supplied constant author)
   (set-slot-if-supplied constant source)
   (set-slot-if-supplied constant complement)
-  (set-slot-if-supplied constant magic0)
+  (set-slot-if-supplied constant magic)
   (set-slot-if-supplied constant skolem-p)
   (set-slot-if-supplied constant created-p)
   (set-slot-if-supplied constant constructor0)

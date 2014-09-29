@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2008.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -63,6 +63,18 @@
   (if (row-embedding-p row)
       (row-weight+depth+level (row-parent row))
       (+ (wff-weight+depth (row-wff row)) (row-level row))))
+
+(defun row-priority (row)
+  (if (row-embedding-p row)
+      (row-priority (row-parent row))
+      (+ (let ((f (row-priority-size-factor?)))
+           (if (= 0 f) 0 (* f (wff-size (row-wff row)))))
+         (let ((f (row-priority-weight-factor?)))
+           (if (= 0 f) 0 (* f (wff-weight (row-wff row)))))
+         (let ((f (row-priority-depth-factor?)))
+           (if (= 0 f) 0 (* f (wff-depth (row-wff row)))))
+         (let ((f (row-priority-level-factor?)))
+           (if (= 0 f) 0 (* f (row-level row)))))))
 
 (defun row-wff&answer-weight+depth (row)
   (if (row-embedding-p row)

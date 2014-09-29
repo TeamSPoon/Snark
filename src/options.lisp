@@ -171,7 +171,11 @@
 (declare-snark-option builtin-constant-weight 1 1)		;number or const->number function
 (declare-snark-option bag-weight-factorial nil nil)
 
-(declare-snark-option agenda-ordering-function 'row-weight+depth)
+(declare-snark-option agenda-ordering-function 'row-priority)
+(declare-snark-option row-priority-size-factor 0 0)
+(declare-snark-option row-priority-weight-factor 1 1)
+(declare-snark-option row-priority-depth-factor 1 1)
+(declare-snark-option row-priority-level-factor 1 1)
 (declare-snark-option pruning-tests '(row-weight-limit-exceeded))
 (declare-snark-option pruning-tests-before-simplification '(row-weight-before-simplification-limit-exceeded))
 

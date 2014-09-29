@@ -19,15 +19,6 @@
 
 (in-package :snark)
 
-(definline subsort-p (x y)
-  ;; old function name
-  (subsort? x y))
-
-(definline input-sort (name &optional (not-found-action 'error))
-  ;; old function name
-  (declare (ignore not-found-action))
-  (the-sort name))
-
 (defun declare-the-sort-function-symbol (name sort)
   (declare-function
    (intern (to-string :the- name) :snark-user) 1
@@ -62,7 +53,7 @@
   (when (function-associative function)
     (check-associative-function-sort function))
   nil)
-
+
 (defvar *%check-for-well-sorted-atom%* t)
 
 (defun check-for-well-sorted-atom (atom &optional subst)
@@ -250,7 +241,8 @@
                         (if first
                             (setf (function-sort head) sort)
                             (return nil)))))))
-
+
+
 (definline constant-sort-p (constant sort)
   (or (top-sort? sort)
       (subsort1? (constant-sort constant) sort)))
@@ -261,11 +253,7 @@
 
 (defun term-sort-p (term sort &optional subst)
   (or (top-sort? sort)
-      (dereference
-       term subst
-       :if-constant (constant-sort-p term sort)
-       :if-variable (variable-sort-p term sort)
-       :if-compound (subsort1? (term-sort term subst) sort))))
+      (subsort1? (term-sort term subst) sort)))
 
 (defun term-subsort-p (term1 term2 &optional subst)
   (or (dereference					;allows wffs for rewriting
@@ -281,7 +269,8 @@
 (defun sort-compatible-p (term1 term2 &optional subst)
   (let ((sort2 (term-sort term2 subst)))
     (or (top-sort? sort2) (not (sort-disjoint? (term-sort term1 subst) sort2)))))
-
+
+
 (defun check-associative-function-sort (fn)
   ;; force sort specification to be of form (sort (t sort))
   (let ((sort (function-sort fn))

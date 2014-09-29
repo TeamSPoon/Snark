@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2009.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -184,7 +184,8 @@
   ;; returns nil otherwise
   (with-clock-on ordering
     (instantiating-direction1 (variables x subst) (variables y subst))))
-
+
+
 (defun literal-ordering-a (atom1 polarity1 atom2 polarity2 &optional subst testval)
   (declare (ignore polarity1 polarity2))
   (simplification-ordering-compare-terms atom1 atom2 subst testval))
@@ -230,11 +231,13 @@
         '?)))
     (otherwise
      '?)))
-
+
+
 (defun literal-is-not-dominated-in-clause-p (orderfun atom polarity clause subst)
   (prog->
     (map-atoms-in-clause clause ->* atom2 polarity2)
     (when (and (neq atom atom2)
+               (not (do-not-resolve atom2))
                (eq '< (funcall orderfun atom polarity atom2 polarity2 subst '<)))
       (return-from literal-is-not-dominated-in-clause-p nil)))
   t)
@@ -243,6 +246,7 @@
   (prog->
     (map-atoms-in-clause clause ->* atom2 polarity2)
     (when (and (neq atom atom2)
+               (not (do-not-resolve atom2))
                (eq '> (funcall orderfun atom polarity atom2 polarity2 subst '>)))
       (return-from literal-is-not-dominating-in-clause-p nil)))
   t)
@@ -255,7 +259,8 @@
             polarity
             (if (and subst n) (instantiate wff n) wff)
             subst)))
-
+
+
 (defun selected-atoms-in-row (row orderfun)
   ;; which atoms in row are selected by orderfun before considering instantiation
   (let* ((selections (row-selections-alist row))
@@ -269,11 +274,12 @@
          ((row-sequential row)			;if sequential, select only the first atom
           (prog->
             (map-atoms-in-wff (row-wff row) ->* atom polarity)
-            (setf l (list (list atom polarity)))
-            (return-from prog->)))
+            (unless (do-not-resolve atom)
+              (setf l (list (list atom polarity)))
+              (return-from prog->))))
          ((or (null orderfun)			;else if no orderfun or row is nonclausal,
               (not (clause-p (row-wff row))))	;select all of the atoms
-          (setf l (atoms-in-wff2 (row-wff row))))
+          (setf l (remove-if #'do-not-resolve (atoms-in-wff2 (row-wff row)) :key #'first)))
          (t					;else use orderfun on literals of clause and
           (prog->				;return eq subset of (selected-atoms-in-row row nil)
             (dolist (selected-atoms-in-row row nil) ->* x)
@@ -328,7 +334,8 @@
     (unless (selected-atom-p atomk polarity selected-atoms-in-rowk orderfun subst k atomk*)
       (return nil))
     (decf k)))
-
+
+
 (defmethod theory-rewrite (wff (theory (eql 'ordering)))
   wff)
 

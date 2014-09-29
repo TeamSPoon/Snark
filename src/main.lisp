@@ -47,15 +47,6 @@
 
 (defvar critique-options t)
 
-(defvar *break-snark?* nil)			;ttp
-
-(defvar *interactive? nil			;ttp
-  "When T, an inference rule has been called interactively, so typically
-   it is not supposed to form all consequences; just with the one in *ROW2*.")
-
-(defvar *row2* nil				;ttp
-  "the second argument to an interactive inference rule.")
-
 (defvar *propositional-abstraction-of-input-wffs*)
 
 (defvar *negative-hyperresolution*)
@@ -531,6 +522,7 @@
                                 :source source
                                 :input-wff (if (neq none input-wff) input-wff input-wff1)
                                 :name name)))
+            #+ignore
             (when (use-constraint-purification?)
               (setf row (constraint-purify-row row)))
             (when (use-assertion-analysis?)
@@ -1163,6 +1155,7 @@
     (apply 'map-rows map-rows-options ->* row)
     (unstore-wff row "Deleted")))
 
+#+ignore
 (defun constraint-purify-row (row)
   (prog->
     (cl:assert (row-clause-p row))
@@ -1323,9 +1316,7 @@
                (map-rows :rowset row2s :reverse t ->* row2)
                (row-context-live? row2 ->nonnil context2)
                (selected-atoms-in-row row2 orderfun -> selected-atoms-in-row2)
-               (when (and (if *interactive?
-                              (implies *row2* (eq row2 *row2*))
-                              (row-given-p row2))
+               (when (and (row-given-p row2)
                           (not (row-hint-p row2))
                           (or (and (row-unit-p row1) (row-unit-p row2))
                               (meets-binary-restrictions-p row1 row2))
@@ -1404,7 +1395,7 @@
        (tme-term atom1-entry -> atom1)
        (quote nil -> atom1*)
        (map-rows :rowset row1s :reverse t ->* row1)
-       (when (and (or *interactive? (row-given-p row1))
+       (when (and (row-given-p row1)
                   (not (row-hint-p row1)))
 	 (setq-once atom1* (instantiate atom1 1))
 	 (setq-once atom2* (instantiate atom2 2))
@@ -1440,8 +1431,7 @@
     (hyperresolution-orderfun -> orderfun)
     (cond
      ((null atoms*)
-      (when (and (implies *interactive? (submultisetp *row2* (mapcar #'first electrons)))
-		 (or (row-supported nucleus)
+      (when (and (or (row-supported nucleus)
 		     (some (lambda (x) (row-supported (first x))) electrons))
 		 (selected-atoms-in-hyperresolution-electrons-p electrons subst))
 	(make-hyperresolvent nucleus electrons residues subst)))
@@ -1478,7 +1468,7 @@
       (quote nil -> atomn*)
       (map-rows :rowset rowns :reverse t ->* rown)
       (selected-atoms-in-row rown orderfun -> selected-atoms-in-rown)
-      (when (and (or *interactive? (row-given-p rown))
+      (when (and (row-given-p rown)
                  (not (row-hint-p rown))
 		 (row-hyperresolution-electron-p rown))
 	(when (selected-atom-p
@@ -1504,7 +1494,7 @@
       (tme-term atom1-entry -> atom1)
       (quote nil -> atom1*)
       (map-rows :rowset row1s :reverse t ->* row1)	;nucleus
-      (when (and (or *interactive? (row-given-p row1))
+      (when (and (row-given-p row1)
                  (row-clause-p row1)
                  (not (row-hint-p row1))
                  (not (row-unit-p row1)))
@@ -1523,7 +1513,6 @@
   (cond
    ((null l)
     (when (and (or electrons *resolve-functions-used*)
-               (implies *interactive? (submultisetp *row2* electrons))
                (or (row-supported nucleus)
                    (some #'row-supported electrons))
                (implies (and target-atom
@@ -1560,7 +1549,7 @@
         (tme-term atomk-entry -> atomk)
         (quote nil -> atomk*)
         (map-rows :rowset rowks :reverse t ->* rowk)
-        (when (and (or *interactive? (row-given-p rowk))
+        (when (and (row-given-p rowk)
                    (not (row-hint-p rowk))
                    (row-unit-p rowk))
           (setq-once atomk* (instantiate atomk k))
@@ -1685,9 +1674,7 @@
     (unless (variable-p term2)
       (rows-containing-paramodulatable-term term2 -> row2s)
       (when row2s
-        (setf row2s (impose-binary-restrictions row1 (if (and *interactive? *row2*)
-                                                         (remove-if-not (lambda (x) (eq *row2* x)) row2s)
-                                                         row2s)))
+        (setf row2s (impose-binary-restrictions row1 row2s))
         (when row2s
           (instantiate term2 2 -> term2*)
           (and embedding-variables1		;unify-bag only cares if both terms are embeddings
@@ -1832,7 +1819,7 @@
   (rows :rowset (rows-containing-term term)
         :reverse t
         :test (lambda (row)
-                (and (or *interactive? (row-given-p row))
+                (and (row-given-p row)
                      (implies (use-paramodulation-only-into-units?) (row-unit-p row))
                      (paramodulation-allowable-p term row)))))
 
@@ -1998,6 +1985,7 @@
 		       thereis (row-deleted-p parent)))
         (process-new-row-msg "Row parent is deleted.")
         (return-from process-new-row nil))
+      #+ignore
       (when (and (use-constraint-purification?) (not (constraint-purified-row-p row)))
         (process-new-row-msg "Row wff is not purified.")
         (return-from process-new-row nil))
@@ -2332,9 +2320,6 @@
                :reason `(combine ,@(rows :rowset *constraint-rows* :reverse t))))
     (rowset-delete given-row *constraint-rows*)))
 
-(defun break-snark ()				;ttp
-  (setf *break-snark?* t))
-
 (defun initialize-propositional-abstraction-of-input-wffs ()
   (let ((clause-set (make-dp-clause-set)))
     (dp-insert (list (list (function-name *=*) (function-arity *=*))) clause-set)
@@ -2427,10 +2412,6 @@
           (return :number-of-rows-limit))
         (when (and run-time-limit (<= run-time-limit (total-run-time)))
           (return :run-time-limit))
-        (when *break-snark?*
-          (clear-input)
-          (setf *break-snark?* nil)
-          (break "Break in closure at user request."))
         (when listen-for-commands
           (case (read-char-no-hang *terminal-io* nil nil)
             ((nil)
@@ -2467,7 +2448,8 @@
     (when (print-rows-when-finished?)
       (print-rows :ancestry t))
     (nocomment)))
-
+
+
 (defun proof ()
   ;; final row of the proof found in the most recent call on closure
   ;; nil if no proof was found in the most recent call on closure

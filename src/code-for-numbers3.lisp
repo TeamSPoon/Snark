@@ -36,7 +36,7 @@
 ;;;
 ;;; SNARK number type hierarchy: number = complex > real > rational > integer
 ;;;
-;;; arithmetic relations are encoded in terms of $less and $lesseq
+;;; arithmetic relations are encoded in terms of $less
 ;;; using lexicographic ordering of complex numbers
 ;;; that also enables additive cancellation law
 ;;; and multiplicative cancellation law for multiplication by nonzero reals
@@ -44,7 +44,6 @@
 (defvar *sum*)
 (defvar *product*)
 (defvar *less*)
-(defvar *lesseq*)
 (defvar *reciprocal*)
 
 (defun rnumberp (x)
@@ -59,6 +58,7 @@
 
 (defun less? (x y)
   ;; extend < to total lexicographic ordering of complex numbers so that
+  ;; a < b  or  a = b  or  a > b
   ;; a < b  iff  a+c < b+c
   ;; a < b  iff  a*c < b*c  (real c>0)
   ;; a < b  iff  a*c > b*c  (real c<0)
@@ -71,6 +71,9 @@
 
 (defun greater? (x y)
   (less? y x))
+
+(defun greatereq? (x y)
+  (lesseq? y x))
 
 (defun euclidean-quotient (number &optional (divisor 1))
   (mvlet (((values quotient remainder) (truncate number divisor)))
@@ -115,24 +118,8 @@
   (declare-arithmetic-characteristic-relation '$$integerp  #'integerp  'integer)
   (declare-arithmetic-characteristic-relation '$$naturalp  #'naturalp  'natural)
 
-  (setf *less* (declare-arithmetic-relation '$$less 2
-                                            :rewrite-code (list 'irreflexivity-rewriter
-                                                                #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'less?))
-                                                                'arithmetic-relation-rewriter
-                                                                'term-rel-term-to-0-rel-difference-atom-rewriter
-                                                                #'(lambda (x s) (arithmetic-atom-rewriter6 x s '$$lesseq t t)))
-                                            :falsify-code '(constructor-irreflexivity-falsifier variables-irreflexivity-falsifier)))
+  (declare-arithmetic-inequality-relations)
 
-  (setf *lesseq* (declare-arithmetic-relation '$$lesseq 2
-                                              :rewrite-code (list 'reflexivity-rewriter
-                                                                  #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'lesseq?))
-                                                                  'arithmetic-relation-rewriter
-                                                                  'term-rel-term-to-0-rel-difference-atom-rewriter
-                                                                  #'(lambda (x s) (arithmetic-atom-rewriter6 x s '$$less t t)))))
-
-  (declare-arithmetic-relation '$$greater   2 :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter4 x s '$$less t nil)))
-  (declare-arithmetic-relation '$$greatereq 2 :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter4 x s '$$lesseq t nil)))
-  
   (setf *sum* (declare-arithmetic-function '$$sum 2
                                            :associative t
                                            :commutative t
@@ -181,7 +168,42 @@
 
   (declare-arithmetic-function '$$realpart  1 :sort 'real :sort-code 'arithmetic-term-sort-computer3 :rewrite-code #'(lambda (x s) (arithmetic-term-rewriter1 x s #'rnumberp #'realpart)))
   (declare-arithmetic-function '$$imagpart  1 :sort 'real :sort-code 'arithmetic-term-sort-computer3 :rewrite-code #'(lambda (x s) (arithmetic-term-rewriter1 x s #'rnumberp #'imagpart)))
+  nil)
 
+(defun declare-arithmetic-inequality-relations ()
+  (setf *less* (declare-arithmetic-relation '$$$less 2
+                                            :rewrite-code (list 'irreflexivity-rewriter
+                                                                #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'less?))
+                                                                'arithmetic-relation-rewriter
+                                                                'term-rel-term-to-0-rel-difference-atom-rewriter)
+                                            :falsify-code 'irreflexivity-falsifier))
+  (declare-arithmetic-relation '$$$greater   2 :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter4 x s '$$$less t nil)))
+  (declare-arithmetic-relation '$$$lesseq    2 :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter4 x s '$$$less t t)))
+  (declare-arithmetic-relation '$$$greatereq 2 :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter4 x s '$$$less nil t)))
+  (let ((inputter
+         (let ((done nil))
+           (function
+            (lambda (head args polarity)
+              (declare (ignorable head args polarity))
+              (unless done
+                (setf done t)
+                (assert '(forall (x) (not ($$less x x)))    :name :$$less-is-irreflexive)
+                (assert '(forall (x) (not ($$greater x x))) :name :$$greater-is-irreflexive)
+                (assert '(forall (x) ($$lesseq x x))        :name :$$lesseq-is-reflexive)
+                (assert '(forall (x) ($$greatereq x x))     :name :$$greatereq-is-reflexive)
+                (assert '(forall ((x number) (y number)) (implied-by ($$less x y)                 ($$$less x y)))  :name :solve-$$less-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by ($$greater x y)              ($$$less y x)))  :name :solve-$$greater-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by ($$lesseq x y)          (not ($$$less y x)))) :name :solve-$$lesseq-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by ($$greatereq x y)       (not ($$$less x y)))) :name :solve-$$greatereq-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by (not ($$less x y))      (not ($$$less x y)))) :name :solve-~$$less-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by (not ($$greater x y))   (not ($$$less y x)))) :name :solve-~$$greater-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by (not ($$lesseq x y))         ($$$less y x)))  :name :solve-~$$lesseq-by-$$$less)
+                (assert '(forall ((x number) (y number)) (implied-by (not ($$greatereq x y))      ($$$less x y)))  :name :solve-~$$greatereq-by-$$$less))
+              none)))))
+    (declare-relation '$$less      2 :input-code inputter :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'less?)))
+    (declare-relation '$$greater   2 :input-code inputter :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'greater?)))
+    (declare-relation '$$lesseq    2 :input-code inputter :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'lesseq?)))
+    (declare-relation '$$greatereq 2 :input-code inputter :rewrite-code #'(lambda (x s) (arithmetic-atom-rewriter1 x s #'rnumberp #'greatereq?))))
   nil)
 
 (defun arithmetic-term-sort-computer0 (term subst sort-names default-sort-name)
@@ -231,13 +253,6 @@
   (let* ((args (args atom))
          (atom* (make-compound* (input-relation-symbol newhead (length args)) (if reverse (reverse args) args))))
     (if negate (negate atom*) atom*)))
-
-(defun arithmetic-atom-rewriter6 (atom subst newhead reverse negate)
-  (case (redex-polarity)
-    (:neg
-     (arithmetic-atom-rewriter4 atom subst newhead reverse negate))
-    (otherwise
-     none)))
 
 (defun arithmetic-term-rewriter1 (term subst pred operator)
   (let ((args (arithmetic-expr-args term subst pred)))
@@ -377,7 +392,7 @@
 (defun term-rel-term-to-0-rel-difference-atom-rewriter (atom subst)
   (mvlet ((rel (head atom))
           ((list a b) (args atom)))
-    (cl:assert (or (eq *less* rel) (eq *lesseq* rel)))
+    (cl:assert (eq *less* rel))
     (cond
      ((dereference2
        a b subst
@@ -396,7 +411,7 @@
   ;; (eq (sum 2 c) 6) -> (eq c 4) and (less 6 (sum 2 c)) -> (less 4 c) etc.
   (mvlet ((rel (head atom))
           ((list a b) (args atom)))
-    (cl:assert (or (eq *less* rel) (eq *lesseq* rel) (eq *=* rel)))
+    (cl:assert (or (eq *less* rel) (eq *=* rel)))
     (or (dereference
          a subst
          :if-constant (and (rnumberp a)
@@ -419,7 +434,7 @@
   ;; like sum-rel-number-atom-rewriter, but don't divide by zero, and reverse arguments when dividing by negative number
   (mvlet ((rel (head atom))
           ((list a b) (args atom)))
-    (cl:assert (or (eq *less* rel) (eq *lesseq* rel) (eq *=* rel)))
+    (cl:assert (or (eq *less* rel) (eq *=* rel)))
     (or (dereference
          a subst
          :if-constant (and (rnumberp a)
@@ -445,7 +460,7 @@
 (defun reciprocal-rel-number-atom-rewriter (atom subst)
   (mvlet ((rel (head atom))
           ((list a b) (args atom)))
-    (cl:assert (or (eq *less* rel) (eq *lesseq* rel) (eq *=* rel)))
+    (cl:assert (or (eq *less* rel) (eq *=* rel)))
     (cond
      ((eq *less* rel)
       none)

@@ -23,25 +23,26 @@
 (defconstant $number-of-variables-per-block 6000)
 (defconstant $number-of-variables-in-blocks (* $number-of-variable-blocks $number-of-variables-per-block))
 
-(defvar *variables*)				;table to translate (number sort) pairs to variables
+(defvar *variables*)				;tables to translate (sort number) pairs to variables
 (defvar *next-variable-number* 0)		;next number to use for new unique variable
 (declaim (type integer *next-variable-number*))
 
 (defstruct (variable
-            (:constructor make-variable0 (number sort))
+            (:constructor make-variable0 (sort number))
             (:copier nil)
             (:print-function print-variable))
   number
   sort)
 
 (defun initialize-variables ()
-  (setf *variables* (make-sparse-matrix :rows t))
+  (setf *variables* (list (make-sparse-vector) (make-hash-table :test #'equal)))
   (setf *next-variable-number* $number-of-variables-in-blocks)
   nil)
 
-(defun make-variable (&optional sort number)
+(defun make-variable (&optional (sort (top-sort)) number)
   ;; if number is specified, return canonical variable for that sort and number
   ;; if number is not specified, create a new unique variable with that sort
+  ;;
   ;; variable identity must be testable by EQ
   ;; this variable representation must also be understood by dereference
   ;;
@@ -49,18 +50,21 @@
   ;; the following variable would be in the next block creating confusion
   (cond
    (number
-    (let* ((s (and (not (top-sort? sort)) sort))
-           (s# (funcall *standard-equal-numbering* :lookup s)))
-      (or (sparef *variables* number s#)
+    (let ((vars (if (top-sort? sort)
+                    (first *variables*)
+                    (let ((v (second *variables*)))
+                      (or (gethash sort v) (setf (gethash sort v) (make-sparse-vector)))))))
+      (or (sparef vars number)
           (progn
             (cl:assert (<= 0 number))
             (cl:assert (< number $number-of-variables-in-blocks))
             (cl:assert (/= 0 (mod (+ number 1) $number-of-variables-per-block)))
-            (setf (sparef *variables* number s#) (make-variable0 number (or sort (top-sort))))))))
+            (setf (sparef vars number) (make-variable0 sort number))))))
    (t
     (setf *next-variable-number* (+ (setf number *next-variable-number*) 1))
-    (make-variable0 number (or sort (top-sort))))))
-
+    (make-variable0 sort number))))
+
+
 (defun variable-block (n)
   (declare (fixnum n))
   (cl:assert (< 0 n $number-of-variable-blocks))

@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2011.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -20,7 +20,6 @@
 (in-package :snark)
 
 (defvar *skolem-function-alist* nil)
-(defvar *var-renaming-subst* nil)		;ttp
 (defvar *input-wff* nil)
 (defvar *input-wff-substitution*)		;alist of (variable-name . variable) or (variable-name . skolem-term) pairs
 (defvar *input-wff-substitution2*)
@@ -159,7 +158,7 @@
                         (null (position-if-not #'digit-char-p s :start (+ 1 v))))))))))
 
 (defun sort-from-variable-name (name)
-  ;; ?name#sort is the preferred way to input sorted variables
+  ;; ?name.sort is the preferred way to input sorted variables
   ;; ?sort<digit>* works too with deprecated use-variable-name-sorts option (but not for sort names that end in digits or sorts named x,y,z,u,v,w)
   (let* ((s (symbol-name name))
          (p (position (variable-sort-marker?) s :from-end t)))
@@ -235,7 +234,6 @@
         (setf wff* (make-implication *input-wff-new-antecedents* wff*)))
       (when clausify
         (setf wff* (clausify wff*)))
-      (setf *var-renaming-subst* (remove-if-not #'variable-p *input-wff-substitution2* :key #'cdr))
       (values wff* nil *input-wff* *input-wff-substitution2*))))
 
 (defun input-wff1 (wff polarity)

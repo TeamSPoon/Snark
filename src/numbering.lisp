@@ -12,7 +12,7 @@
 ;;;
 ;;; The Original Code is SNARK.
 ;;; The Initial Developer of the Original Code is SRI International.
-;;; Portions created by the Initial Developer are Copyright (C) 1981-2006.
+;;; Portions created by the Initial Developer are Copyright (C) 1981-2012.
 ;;; All Rights Reserved.
 ;;;
 ;;; Contributor(s): Mark E. Stickel <stickel@ai.sri.com>.
@@ -22,7 +22,6 @@
 (defvar *nonce* 0)
 (declaim (type integer *nonce*))
 (defvar *standard-eql-numbering*)
-(defvar *standard-equal-numbering*)
 
 (definline nonce ()
   ;; each call returns a new positive value in ascending order
@@ -31,7 +30,6 @@
 (defun initialize-numberings ()
   (setf *nonce* 0)
   (setf *standard-eql-numbering* (make-numbering :test #'eql))
-  (setf *standard-equal-numbering* (make-numbering :test #'equal))
   nil)
 
 (defun make-numbering (&key (test #'eql) (inverse t))

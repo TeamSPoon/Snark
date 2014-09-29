@@ -21,8 +21,7 @@
 
 ;;; load files from the same directory that this file was loaded from
 
-(defparameter *snark-system-pathname* 
-  (make-pathname :type "lisp" :defaults *load-truename*))
+(defparameter *snark-system-pathname* *load-truename*)
 
 (defparameter *snark-files2*
   '("loads"
@@ -55,7 +54,7 @@
     "assertion-analysis"
     "jepd-relations-tables" "jepd-relations" "date-reasoning2"
     "constraints"
-    "constraint-purify"
+;;  "constraint-purify"
     "connectives"
     "wffs"
 ;;  "equality-elimination2"
@@ -97,7 +96,6 @@
     "resolve-code-tables"
     "main"
     "subsume" "subsume-clause"
-    "interactive"
     "assertion-file"
     "tptp"
     "tptp-symbols"
